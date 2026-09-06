@@ -13,6 +13,7 @@ export default async function AdminHomePage() {
   const { count: pedidosPendentes } = await supabase
     .from("pedidos")
     .select("id", { count: "exact", head: true })
+    .eq("pagamento_status", "aprovado")
     .in("status", ["recebido", "preparo"]);
 
   return (
