@@ -4,11 +4,40 @@ import { createAdminClient } from "@/lib/supabaseAdmin";
 
 export async function POST(request: NextRequest) {
   try {
-    const { pedidoId, valor, nome, email } = await request.json();
+    const { pedidoId, nome, email } = await request.json();
 
-    if (!pedidoId || !valor || !nome) {
+    if (!pedidoId || !nome) {
       return NextResponse.json(
         { error: "Dados incompletos para criar o pagamento." },
+        { status: 400 }
+      );
+    }
+
+    const supabaseAdmin = createAdminClient();
+
+    // ⚠️ Nunca confiamos no valor enviado pelo navegador — recalculamos o
+    // total aqui, usando o preço REAL de cada produto salvo no banco.
+    // Isso impede que alguém manipule o valor da cobrança pelo navegador.
+    const { data: itensPedido, error: erroItens } = await supabaseAdmin
+      .from("itens_pedido")
+      .select("quantidade, produtos(preco)")
+      .eq("pedido_id", pedidoId);
+
+    if (erroItens || !itensPedido || itensPedido.length === 0) {
+      return NextResponse.json(
+        { error: "Não foi possível calcular o valor do pedido." },
+        { status: 400 }
+      );
+    }
+
+    const valorReal = itensPedido.reduce((soma: number, item: any) => {
+      const preco = item.produtos?.preco ?? 0;
+      return soma + preco * item.quantidade;
+    }, 0);
+
+    if (valorReal <= 0) {
+      return NextResponse.json(
+        { error: "Valor do pedido inválido." },
         { status: 400 }
       );
     }
@@ -22,7 +51,7 @@ export async function POST(request: NextRequest) {
 
     const resultado = await mercadoPagoPayment.create({
       body: {
-        transaction_amount: Number(valor),
+        transaction_amount: valorReal,
         description: `Pedido Serve Bem #${String(pedidoId).slice(0, 8)}`,
         payment_method_id: "pix",
         payer: {
@@ -52,18 +81,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Salva o ID do pagamento no pedido, pra depois conseguirmos vincular
-    // a confirmação (webhook) a este pedido específico.
-    const supabaseAdmin = createAdminClient();
+    // Salva o ID do pagamento e o valor real cobrado, pra manter tudo
+    // consistente (o cliente pode ter mostrado um total diferente na tela,
+    // mas o que realmente vale é o que foi calculado aqui).
     await supabaseAdmin
       .from("pedidos")
-      .update({ mercado_pago_payment_id: String(resultado.id) })
+      .update({
+        mercado_pago_payment_id: String(resultado.id),
+        valor_total: valorReal,
+      })
       .eq("id", pedidoId);
 
     return NextResponse.json({
       paymentId: resultado.id,
       qrCode,
       qrCodeBase64,
+      valor: valorReal,
     });
   } catch (error: unknown) {
     console.error("Erro ao criar pagamento Pix:", error);

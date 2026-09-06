@@ -110,7 +110,6 @@ export default function FinalizarPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           pedidoId: novoPedidoId,
-          valor: totalPreco,
           nome,
           email,
         }),
