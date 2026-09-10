@@ -351,7 +351,7 @@ export default function AdminProdutosClient({
               {form.variacoes.length > 0 && (
                 <div className="mt-2 space-y-2">
                   {form.variacoes.map((v, i) => (
-                    <div key={i} className="flex items-center gap-2">
+                    <div key={i} className="flex flex-wrap items-center gap-2">
                       <select
                         value={v.tamanho}
                         onChange={(e) => atualizarVariacao(i, "tamanho", e.target.value)}
@@ -369,7 +369,7 @@ export default function AdminProdutosClient({
                         value={v.cor}
                         onChange={(e) => atualizarVariacao(i, "cor", e.target.value)}
                         placeholder="Cor"
-                        className="flex-1 border border-line bg-bg px-2 py-1.5 text-sm text-ink outline-none"
+                        className="min-w-0 flex-1 border border-line bg-bg px-2 py-1.5 text-sm text-ink outline-none"
                       />
                       <input
                         type="number"
@@ -377,7 +377,7 @@ export default function AdminProdutosClient({
                         value={v.estoque}
                         onChange={(e) => atualizarVariacao(i, "estoque", e.target.value)}
                         placeholder="Estoque"
-                        className="w-20 border border-line bg-bg px-2 py-1.5 text-center text-sm text-ink outline-none"
+                        className="w-16 border border-line bg-bg px-2 py-1.5 text-center text-sm text-ink outline-none"
                       />
                       <button
                         type="button"

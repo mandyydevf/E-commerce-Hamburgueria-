@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, ShoppingBag } from "lucide-react";
+import { Menu, Search, ShoppingBag, X } from "lucide-react";
 import { useCarrinho } from "@/lib/CartContext";
 import StatusAberto from "@/components/StatusAberto";
 
@@ -12,20 +12,33 @@ export default function Header({ categorias }: { categorias: string[] }) {
   const router = useRouter();
   const [buscaAberta, setBuscaAberta] = useState(false);
   const [busca, setBusca] = useState("");
+  const [menuAberto, setMenuAberto] = useState(false);
 
   function handleBuscar(e: React.FormEvent) {
     e.preventDefault();
     const params = new URLSearchParams();
     if (busca.trim()) params.set("busca", busca.trim());
+    setMenuAberto(false);
     router.push(`/?${params.toString()}#colecao`);
   }
 
   return (
     <header className="sticky top-0 z-40 border-b border-line bg-bg">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4 sm:px-10">
-        <Link href="/" className="text-xl font-extrabold tracking-tight text-ink">
-          VERO STORE
-        </Link>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setMenuAberto((aberto) => !aberto)}
+            className="text-ink md:hidden"
+            aria-label={menuAberto ? "Fechar menu" : "Abrir menu"}
+            aria-expanded={menuAberto}
+          >
+            {menuAberto ? <X size={22} /> : <Menu size={22} />}
+          </button>
+          <Link href="/" className="text-xl font-extrabold tracking-tight text-ink">
+            VERO STORE
+          </Link>
+        </div>
 
         <nav className="hidden items-center gap-6 text-sm font-semibold uppercase tracking-wide text-ink md:flex">
           <Link href="/#colecao" className="transition hover:text-accent">
@@ -82,6 +95,26 @@ export default function Header({ categorias }: { categorias: string[] }) {
           </Link>
         </div>
       </div>
+
+      {/* Menu de categorias no celular — no desktop essas mesmas opções já
+          aparecem na barra horizontal acima */}
+      {menuAberto && (
+        <nav className="flex flex-col border-t border-line px-6 py-2 text-sm font-semibold uppercase tracking-wide text-ink md:hidden">
+          <Link href="/#colecao" onClick={() => setMenuAberto(false)} className="border-b border-line py-3">
+            Tudo
+          </Link>
+          {categorias.map((categoria) => (
+            <Link
+              key={categoria}
+              href={`/?categoria=${encodeURIComponent(categoria)}#colecao`}
+              onClick={() => setMenuAberto(false)}
+              className="border-b border-line py-3 last:border-b-0"
+            >
+              {categoria}
+            </Link>
+          ))}
+        </nav>
+      )}
     </header>
   );
 }

@@ -57,7 +57,7 @@ export default async function HistoricoPedidosPage() {
             Nenhum pedido anterior a hoje ainda.
           </p>
         ) : (
-          <div className="mt-6 overflow-hidden border border-line bg-bg">
+          <div className="mt-6 overflow-x-auto border border-line bg-bg">
             <table className="w-full text-left text-sm">
               <thead className="bg-surface text-xs uppercase tracking-wide text-ink/50">
                 <tr>
