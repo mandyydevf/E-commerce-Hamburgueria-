@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Search } from "lucide-react";
+import { Mail } from "lucide-react";
 import { formatarPreco } from "@/lib/format";
 import {
   ETIQUETA_STATUS_GERAL,
@@ -36,25 +36,54 @@ function formatarData(isoString: string) {
 }
 
 export default function MeusPedidosPage() {
-  const [telefone, setTelefone] = useState("");
-  const [buscando, setBuscando] = useState(false);
+  const [etapa, setEtapa] = useState<"email" | "codigo">("email");
+  const [email, setEmail] = useState("");
+  const [codigo, setCodigo] = useState("");
+  const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [pedidos, setPedidos] = useState<Pedido[] | null>(null);
 
-  async function handleBuscar(e: React.FormEvent) {
+  async function handleEnviarCodigo(e: React.FormEvent) {
     e.preventDefault();
     setErro(null);
-    setBuscando(true);
-    setPedidos(null);
+    setEnviando(true);
 
     try {
-      const resposta = await fetch(
-        `/api/buscar-pedidos?telefone=${encodeURIComponent(telefone)}`
-      );
+      const resposta = await fetch("/api/enviar-codigo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
       const dados = await resposta.json();
 
       if (!resposta.ok) {
-        setErro(dados.error || "Não foi possível buscar seus pedidos.");
+        setErro(dados.error || "Não foi possível enviar o código.");
+        return;
+      }
+
+      setEtapa("codigo");
+    } catch {
+      setErro("Não foi possível conectar. Tente novamente.");
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  async function handleVerificarCodigo(e: React.FormEvent) {
+    e.preventDefault();
+    setErro(null);
+    setEnviando(true);
+
+    try {
+      const resposta = await fetch("/api/verificar-codigo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, codigo }),
+      });
+      const dados = await resposta.json();
+
+      if (!resposta.ok) {
+        setErro(dados.error || "Não foi possível verificar o código.");
         return;
       }
 
@@ -62,7 +91,7 @@ export default function MeusPedidosPage() {
     } catch {
       setErro("Não foi possível conectar. Tente novamente.");
     } finally {
-      setBuscando(false);
+      setEnviando(false);
     }
   }
 
@@ -70,42 +99,79 @@ export default function MeusPedidosPage() {
     <main className="min-h-screen bg-bg px-6 py-12 sm:px-10">
       <div className="mx-auto max-w-2xl">
         <h1 className="text-2xl font-extrabold tracking-tight text-ink">Meus pedidos</h1>
-        <p className="mt-1 text-sm text-inkSoft">
-          Digite o telefone usado na compra pra ver o andamento dos seus pedidos.
-        </p>
 
-        <form onSubmit={handleBuscar} className="mt-6 flex gap-2">
-          <input
-            required
-            type="tel"
-            value={telefone}
-            onChange={(e) => setTelefone(e.target.value)}
-            placeholder="(00) 00000-0000"
-            className="flex-1 border border-line bg-bg px-3 py-2 text-ink outline-none"
-          />
-          <button
-            type="submit"
-            disabled={buscando}
-            className="flex items-center gap-2 bg-ink px-4 py-2 text-sm font-bold uppercase tracking-wide text-bg transition hover:opacity-90 disabled:opacity-60"
-          >
-            <Search size={16} />
-            {buscando ? "Buscando..." : "Buscar"}
-          </button>
-        </form>
+        {pedidos === null ? (
+          <>
+            <p className="mt-1 text-sm text-inkSoft">
+              {etapa === "email"
+                ? "Digite o e-mail usado na compra. Vamos mandar um código pra confirmar que é você."
+                : `Digite o código de 6 dígitos que enviamos para ${email}.`}
+            </p>
 
-        {erro && (
-          <p className="mt-4 text-sm text-red-600" role="alert">
-            {erro}
-          </p>
-        )}
+            {etapa === "email" ? (
+              <form onSubmit={handleEnviarCodigo} className="mt-6 flex gap-2">
+                <input
+                  required
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="seuemail@exemplo.com"
+                  className="flex-1 border border-line bg-bg px-3 py-2 text-ink outline-none"
+                />
+                <button
+                  type="submit"
+                  disabled={enviando}
+                  className="flex items-center gap-2 bg-ink px-4 py-2 text-sm font-bold uppercase tracking-wide text-bg transition hover:opacity-90 disabled:opacity-60"
+                >
+                  <Mail size={16} />
+                  {enviando ? "Enviando..." : "Enviar código"}
+                </button>
+              </form>
+            ) : (
+              <form onSubmit={handleVerificarCodigo} className="mt-6 space-y-3">
+                <input
+                  required
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={codigo}
+                  onChange={(e) => setCodigo(e.target.value.replace(/\D/g, ""))}
+                  placeholder="000000"
+                  className="w-full border border-line bg-bg px-3 py-2 text-center text-2xl tracking-[0.5em] text-ink outline-none"
+                />
+                <div className="flex gap-2">
+                  <button
+                    type="submit"
+                    disabled={enviando}
+                    className="flex-1 bg-ink px-4 py-2 text-sm font-bold uppercase tracking-wide text-bg transition hover:opacity-90 disabled:opacity-60"
+                  >
+                    {enviando ? "Verificando..." : "Verificar código"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEtapa("email");
+                      setCodigo("");
+                      setErro(null);
+                    }}
+                    className="border border-line px-4 py-2 text-sm font-bold text-inkSoft"
+                  >
+                    Trocar e-mail
+                  </button>
+                </div>
+              </form>
+            )}
 
-        {pedidos && pedidos.length === 0 && (
+            {erro && (
+              <p className="mt-4 text-sm text-red-600" role="alert">
+                {erro}
+              </p>
+            )}
+          </>
+        ) : pedidos.length === 0 ? (
           <p className="mt-8 text-center text-sm text-inkSoft">
-            Nenhum pedido encontrado com esse telefone.
+            Nenhum pedido encontrado com esse e-mail.
           </p>
-        )}
-
-        {pedidos && pedidos.length > 0 && (
+        ) : (
           <ul className="mt-8 divide-y divide-line border border-line">
             {pedidos.map((pedido) => {
               const geral = statusGeral(pedido);

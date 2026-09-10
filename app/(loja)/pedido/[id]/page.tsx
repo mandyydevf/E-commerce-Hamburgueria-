@@ -38,11 +38,11 @@ async function getPedido(id: string): Promise<Pedido | null> {
   // tem o ID do próprio pedido (recebido na hora da compra), o que já é
   // suficiente pra provar que é dele.
   //
-  // ⚠️ Nunca selecione cliente_nome/endereco aqui: esta página também é
-  // alcançável a partir da busca por telefone em /meus-pedidos, que não
-  // prova que quem está pedindo é o dono do telefone. Mostrar nome e
-  // endereço deixaria qualquer um que soubesse (ou adivinhasse) o telefone
-  // de alguém descobrir onde essa pessoa mora.
+  // ⚠️ Nunca selecione cliente_nome/endereco aqui: mesmo com a busca em
+  // /meus-pedidos agora exigindo confirmar um código enviado por e-mail,
+  // é mais seguro manter essa página sem PII — ela não tem login nenhum,
+  // então qualquer vazamento do link (histórico do navegador, print de
+  // tela, etc.) não expõe nome nem endereço de ninguém.
   const supabaseAdmin = createAdminClient();
   const { data, error } = await supabaseAdmin
     .from("pedidos")

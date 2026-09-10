@@ -78,6 +78,7 @@ create table if not exists pedidos (
   id uuid primary key default gen_random_uuid(),
   cliente_nome text not null,
   cliente_telefone text not null,
+  cliente_email text,
   tipo_entrega text not null check (tipo_entrega in ('retirada', 'entrega')),
   endereco text,
   status text not null default 'separacao'
@@ -137,6 +138,23 @@ create policy "Usuarios logados podem ver itens de pedido"
   on itens_pedido for select
   to authenticated
   using (true);
+
+
+-- 3.1) Códigos de verificação por e-mail (pra loja em /meus-pedidos).
+-- Só o servidor mexe aqui (chave service_role) — RLS ligado sem
+-- nenhuma policy, então ninguém consegue ler/escrever via navegador.
+create table if not exists codigos_verificacao (
+  id uuid primary key default gen_random_uuid(),
+  email text not null,
+  codigo text not null,
+  expira_em timestamptz not null,
+  usado boolean not null default false,
+  criado_em timestamptz not null default now()
+);
+
+alter table codigos_verificacao enable row level security;
+
+create index if not exists codigos_verificacao_email_idx on codigos_verificacao (email);
 
 
 -- ============================================================

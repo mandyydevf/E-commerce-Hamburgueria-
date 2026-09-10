@@ -70,6 +70,7 @@ export default function FinalizarPage() {
       id: novoPedidoId,
       cliente_nome: nome,
       cliente_telefone: telefone,
+      cliente_email: email,
       tipo_entrega: tipoEntrega,
       endereco: tipoEntrega === "entrega" ? endereco : null,
       valor_total: totalPreco,
@@ -253,7 +254,7 @@ export default function FinalizarPage() {
             <Link href="/meus-pedidos" className="underline">
               Meus pedidos
             </Link>
-            , buscando pelo telefone usado na compra.
+            , confirmando pelo e-mail usado na compra.
           </p>
         </div>
       </main>
@@ -297,15 +298,20 @@ export default function FinalizarPage() {
 
             <div>
               <label className="block text-sm font-bold text-inkSoft">
-                E-mail (opcional, pra comprovante)
+                E-mail
               </label>
               <input
+                required
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="mt-1 w-full border border-line bg-bg px-3 py-2 text-ink outline-none"
                 placeholder="seuemail@exemplo.com"
               />
+              <p className="mt-1 text-xs text-inkSoft">
+                Usamos pra você conseguir acessar seus pedidos depois, em
+                "Meus pedidos"
+              </p>
             </div>
 
             <div>
