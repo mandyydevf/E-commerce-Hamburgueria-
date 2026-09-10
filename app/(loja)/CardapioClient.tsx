@@ -68,7 +68,7 @@ function ProdutoCard({ produto }: { produto: Produto }) {
   }
 
   return (
-    <article className="flex flex-col border border-line bg-bg">
+    <article className="group flex flex-col border border-line bg-bg">
       <div className="relative aspect-[4/5] w-full overflow-hidden bg-surface">
         {produto.imagem_url ? (
           <a
@@ -80,7 +80,9 @@ function ProdutoCard({ produto }: { produto: Produto }) {
             <img
               src={produto.imagem_url}
               alt={produto.nome}
-              className={`h-full w-full object-cover ${!produto.disponivel ? "grayscale" : ""}`}
+              className={`h-full w-full object-cover transition-transform duration-300 group-hover:scale-105 ${
+                !produto.disponivel ? "grayscale" : ""
+              }`}
             />
           </a>
         ) : (

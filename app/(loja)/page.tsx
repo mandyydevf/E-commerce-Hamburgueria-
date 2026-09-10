@@ -38,8 +38,8 @@ export default async function CardapioPage() {
 
   return (
     <main className="min-h-screen bg-bg">
-      {/* Banner do hero — troque o texto/imagem quando tiver fotos reais da
-          loja (veja instruções no README, seção "Hero") */}
+      {/* Banner do hero — pra trocar a foto depois, é só substituir o
+          arquivo public/hero.jpg por outro com o mesmo nome */}
       <section className="border-b border-line bg-surface">
         <div className="mx-auto grid max-w-6xl grid-cols-1 items-center gap-8 px-6 py-14 sm:px-10 sm:py-20 lg:grid-cols-2">
           <div>
@@ -61,17 +61,9 @@ export default async function CardapioPage() {
             </Link>
           </div>
 
-          <div className="relative mx-auto flex h-48 w-48 items-center justify-center sm:h-64 sm:w-64">
-            <svg viewBox="0 0 200 200" className="h-full w-full" aria-hidden="true">
-              <circle cx="100" cy="100" r="96" fill="#FFFFFF" stroke="#E4E4E7" strokeWidth="2" />
-              <g stroke="#171717" strokeWidth="4" strokeLinecap="round">
-                <line x1="100" y1="45" x2="100" y2="155" />
-                <line x1="45" y1="100" x2="155" y2="100" />
-                <line x1="63" y1="63" x2="137" y2="137" />
-                <line x1="137" y1="63" x2="63" y2="137" />
-              </g>
-              <circle cx="100" cy="100" r="14" fill="#E01233" />
-            </svg>
+          <div className="relative mx-auto h-64 w-56 sm:h-80 sm:w-72">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/hero.png" alt="Vero Store" className="h-full w-full object-contain" />
           </div>
         </div>
       </section>
