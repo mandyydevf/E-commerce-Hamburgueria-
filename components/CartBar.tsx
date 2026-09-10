@@ -16,10 +16,10 @@ export default function CartBar() {
   if (ocultarNestaPagina || totalItens === 0) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 bg-flame px-4 py-3 shadow-[0_-4px_16px_rgba(0,0,0,0.4)]">
+    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-ink px-4 py-3 shadow-[0_-4px_16px_rgba(0,0,0,0.15)]">
       <Link
         href="/carrinho"
-        className="mx-auto flex max-w-5xl items-center justify-between text-night"
+        className="mx-auto flex max-w-6xl items-center justify-between text-bg"
       >
         <span className="font-bold">
           {totalItens} {totalItens === 1 ? "item" : "itens"} ·{" "}

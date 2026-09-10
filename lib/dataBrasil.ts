@@ -23,3 +23,23 @@ export function intervaloDeHojeBrasil(referencia: Date = new Date()) {
 
   return { inicio: inicio.toISOString(), fim: fim.toISOString() };
 }
+
+// Igual à função acima, mas devolve o intervalo do mês inteiro de "hoje"
+// (usado pro faturamento mensal do painel).
+export function intervaloDoMesBrasil(referencia: Date = new Date()) {
+  const comoSeFosseBrasil = new Date(
+    referencia.getTime() - DESLOCAMENTO_BRASIL_MS
+  );
+
+  const ano = comoSeFosseBrasil.getUTCFullYear();
+  const mes = comoSeFosseBrasil.getUTCMonth();
+
+  const inicio = new Date(
+    Date.UTC(ano, mes, 1, 0, 0, 0) + DESLOCAMENTO_BRASIL_MS
+  );
+  const fim = new Date(
+    Date.UTC(ano, mes + 1, 1, 0, 0, 0) + DESLOCAMENTO_BRASIL_MS
+  );
+
+  return { inicio: inicio.toISOString(), fim: fim.toISOString() };
+}

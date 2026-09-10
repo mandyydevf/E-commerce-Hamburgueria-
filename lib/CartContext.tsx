@@ -9,17 +9,32 @@ import {
 } from "react";
 
 export type ItemCarrinho = {
-  id: string;
+  // Identifica a linha do carrinho — mesmo produto em tamanho/cor
+  // diferentes vira linhas separadas, por isso a chave junta os três.
+  chave: string;
+  produtoId: string;
   nome: string;
   preco: number;
+  tamanho: string | null;
+  cor: string | null;
   quantidade: number;
 };
 
+function chaveDoItem(produtoId: string, tamanho: string | null, cor: string | null) {
+  return `${produtoId}::${tamanho ?? "-"}::${cor ?? "-"}`;
+}
+
 type CarrinhoContexto = {
   itens: ItemCarrinho[];
-  adicionarItem: (produto: { id: string; nome: string; preco: number }) => void;
-  removerItem: (id: string) => void;
-  alterarQuantidade: (id: string, quantidade: number) => void;
+  adicionarItem: (produto: {
+    id: string;
+    nome: string;
+    preco: number;
+    tamanho: string | null;
+    cor: string | null;
+  }) => void;
+  removerItem: (chave: string) => void;
+  alterarQuantidade: (chave: string, quantidade: number) => void;
   limparCarrinho: () => void;
   totalItens: number;
   totalPreco: number;
@@ -27,7 +42,7 @@ type CarrinhoContexto = {
 
 const CarrinhoContext = createContext<CarrinhoContexto | undefined>(undefined);
 
-const CHAVE_ARMAZENAMENTO = "serve-bem:carrinho";
+const CHAVE_ARMAZENAMENTO = "vero-store:carrinho:v3";
 
 export function CarrinhoProvider({ children }: { children: ReactNode }) {
   const [itens, setItens] = useState<ItemCarrinho[]>([]);
@@ -51,29 +66,47 @@ export function CarrinhoProvider({ children }: { children: ReactNode }) {
     window.localStorage.setItem(CHAVE_ARMAZENAMENTO, JSON.stringify(itens));
   }, [itens, carregado]);
 
-  function adicionarItem(produto: { id: string; nome: string; preco: number }) {
+  function adicionarItem(produto: {
+    id: string;
+    nome: string;
+    preco: number;
+    tamanho: string | null;
+    cor: string | null;
+  }) {
+    const chave = chaveDoItem(produto.id, produto.tamanho, produto.cor);
     setItens((atuais) => {
-      const existente = atuais.find((i) => i.id === produto.id);
+      const existente = atuais.find((i) => i.chave === chave);
       if (existente) {
         return atuais.map((i) =>
-          i.id === produto.id ? { ...i, quantidade: i.quantidade + 1 } : i
+          i.chave === chave ? { ...i, quantidade: i.quantidade + 1 } : i
         );
       }
-      return [...atuais, { ...produto, quantidade: 1 }];
+      return [
+        ...atuais,
+        {
+          chave,
+          produtoId: produto.id,
+          nome: produto.nome,
+          preco: produto.preco,
+          tamanho: produto.tamanho,
+          cor: produto.cor,
+          quantidade: 1,
+        },
+      ];
     });
   }
 
-  function removerItem(id: string) {
-    setItens((atuais) => atuais.filter((i) => i.id !== id));
+  function removerItem(chave: string) {
+    setItens((atuais) => atuais.filter((i) => i.chave !== chave));
   }
 
-  function alterarQuantidade(id: string, quantidade: number) {
+  function alterarQuantidade(chave: string, quantidade: number) {
     if (quantidade <= 0) {
-      removerItem(id);
+      removerItem(chave);
       return;
     }
     setItens((atuais) =>
-      atuais.map((i) => (i.id === id ? { ...i, quantidade } : i))
+      atuais.map((i) => (i.chave === chave ? { ...i, quantidade } : i))
     );
   }
 

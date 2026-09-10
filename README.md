@@ -1,7 +1,7 @@
-# Serve Bem Hamburgueria — Fase 2 (Banco de dados real)
+# Vero Store — Fase 2 (Banco de dados real)
 
 Agora o projeto está conectado a um banco de dados de verdade (Supabase):
-cardápio, carrinho, checkout e painel de pedidos gravando e lendo dados reais,
+catálogo, carrinho, checkout e painel de pedidos gravando e lendo dados reais,
 com login protegendo o painel.
 
 **O que ainda falta pra próxima etapa:** pagamento Pix de verdade (por
@@ -74,8 +74,8 @@ npm run dev
 
 Testa nessa ordem:
 1. Abre `/admin/login`, entra com o usuário do Passo 3
-2. Vai em `/admin/produtos` e cadastra alguns itens do cardápio (com foto)
-3. Volta pra `/` (cardápio público) e confirma que os itens aparecem
+2. Vai em `/admin/produtos` e cadastra algumas peças do catálogo (com foto)
+3. Volta pra `/` (catálogo público) e confirma que os itens aparecem
 4. Adiciona itens ao carrinho, vai em `/carrinho`, depois `/finalizar`
 5. Preenche o formulário e confirma o pedido
 6. Volta pro painel (`/admin/pedidos`) e confirma que o pedido apareceu
@@ -88,7 +88,7 @@ git init
 git add .
 git commit -m "Primeira versao com banco de dados"
 git branch -M main
-git remote add origin https://github.com/SEU-USUARIO/SEU-REPOSITORIO.git
+git remote add origin https://github.com/mandyydevf/E-commerce-Hamburgueria-.git
 git push -u origin main
 ```
 
@@ -190,17 +190,17 @@ desenvolvedores do Mercado Pago) — tanto local quanto na Vercel.
 
 ## Trocando o ícone do hero por uma foto real
 
-Em `app/(loja)/page.tsx`, o hero usa um ícone ilustrado de hambúrguer (SVG)
-no lugar de uma foto, já que ainda não temos uma foto real da Serve Bem.
-Quando o cliente mandar uma foto:
+Em `app/(loja)/page.tsx`, o hero usa um ícone ilustrado (SVG) no lugar de uma
+foto, já que ainda não temos uma foto real da Vero Store. Quando o cliente
+mandar uma foto (de uma peça ou do ambiente da loja):
 
-1. Salve a imagem em `public/hero-burger.jpg` (ou `.png`)
+1. Salve a imagem em `public/hero-loja.jpg` (ou `.png`)
 2. No `app/(loja)/page.tsx`, troque todo o bloco `<svg>...</svg>` dentro do
    comentário "Elemento gráfico do hero" por:
    ```tsx
    <img
-     src="/hero-burger.jpg"
-     alt="Hambúrguer Serve Bem"
+     src="/hero-loja.jpg"
+     alt="Vero Store"
      className="h-full w-full rounded-full object-cover"
    />
    ```

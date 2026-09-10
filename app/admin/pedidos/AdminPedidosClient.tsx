@@ -1,19 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { MessageCircle, X } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { createClient } from "@/lib/supabaseClient";
 import { formatarPreco } from "@/lib/format";
+import {
+  ETAPAS_PEDIDO,
+  ETIQUETA_STATUS_GERAL,
+  COR_STATUS_GERAL,
+  statusGeral,
+  type StatusGeral,
+  type StatusPagamento,
+  type StatusPedido,
+} from "@/lib/statusPedido";
 
 type ItemPedido = {
   id: string;
   produto_nome: string;
+  tamanho: string | null;
+  cor: string | null;
   quantidade: number;
   preco_unitario: number;
 };
-
-type Status = "recebido" | "preparo" | "pronto" | "entregue";
 
 type Pedido = {
   id: string;
@@ -21,28 +30,24 @@ type Pedido = {
   cliente_telefone: string;
   tipo_entrega: "retirada" | "entrega";
   endereco: string | null;
-  status: Status;
+  status: StatusPedido;
+  pagamento_status: StatusPagamento;
+  codigo_rastreio: string | null;
+  transportadora: string | null;
   valor_total: number;
   criado_em: string;
   itens_pedido: ItemPedido[];
 };
 
-const COLUNAS: { status: Status; titulo: string; cor: string }[] = [
-  { status: "recebido", titulo: "Recebido", cor: "bg-flame" },
-  { status: "preparo", titulo: "Em preparo", cor: "bg-mustard" },
-  { status: "pronto", titulo: "Pronto", cor: "bg-mustard" },
-  { status: "entregue", titulo: "Entregue", cor: "bg-ink/60" },
+const FILTROS: { valor: "todos" | StatusGeral; rotulo: string }[] = [
+  { valor: "todos", rotulo: "Todos" },
+  { valor: "aguardando_pagamento", rotulo: "Aguardando pagamento" },
+  { valor: "separacao", rotulo: "Em separação" },
+  { valor: "enviado", rotulo: "Enviado" },
+  { valor: "entregue", rotulo: "Entregue" },
+  { valor: "pagamento_recusado", rotulo: "Pagamento recusado" },
+  { valor: "cancelado", rotulo: "Cancelado" },
 ];
-
-const PROXIMO_STATUS: Record<Status, Status | null> = {
-  recebido: "preparo",
-  preparo: "pronto",
-  pronto: "entregue",
-  entregue: null,
-};
-
-// Quantos cards mostrar por coluna antes de precisar clicar em "Ver todos"
-const LIMITE_VISIVEL = 5;
 
 function formatarHorario(isoString: string) {
   return new Date(isoString).toLocaleTimeString("pt-BR", {
@@ -58,17 +63,23 @@ function telefoneParaWhatsapp(telefone: string) {
 
 function mensagemPorStatus(pedido: Pedido) {
   const nome = pedido.cliente_nome.split(" ")[0];
-  switch (pedido.status) {
-    case "recebido":
-      return `Olá ${nome}! Aqui é da Serve Bem 🍔 Recebemos seu pedido e já vamos começar a preparar!`;
-    case "preparo":
-      return `Olá ${nome}! Seu pedido já está sendo preparado na brasa 🔥`;
-    case "pronto":
+  switch (statusGeral(pedido)) {
+    case "aguardando_pagamento":
+      return `Olá ${nome}! Aqui é da Vero Store 👗 Seu pedido está reservado, só falta a confirmação do pagamento do Pix pra gente começar a separar.`;
+    case "pagamento_recusado":
+      return `Olá ${nome}! O pagamento do seu pedido na Vero Store não foi aprovado. Se quiser, pode tentar de novo pelo site.`;
+    case "separacao":
+      return `Olá ${nome}! Aqui é da Vero Store 👗 Recebemos seu pedido e já estamos separando as peças!`;
+    case "enviado":
       return pedido.tipo_entrega === "retirada"
-        ? `Olá ${nome}! Seu pedido está pronto, pode vir buscar no balcão 🍔`
-        : `Olá ${nome}! Seu pedido está pronto e já vai sair pra entrega 🛵`;
+        ? `Olá ${nome}! Seu pedido está pronto, pode vir buscar na loja 👜`
+        : `Olá ${nome}! Seu pedido foi enviado${
+            pedido.codigo_rastreio ? ` — código de rastreio: ${pedido.codigo_rastreio}` : ""
+          } 📦`;
     case "entregue":
-      return `Olá ${nome}! Esperamos que tenha gostado do pedido. Volte sempre! 🍔`;
+      return `Olá ${nome}! Esperamos que tenha gostado do pedido. Volte sempre! 💛`;
+    case "cancelado":
+      return `Olá ${nome}! Seu pedido na Vero Store foi cancelado. Qualquer dúvida, é só chamar por aqui.`;
   }
 }
 
@@ -87,15 +98,24 @@ export default function AdminPedidosClient({
 }) {
   const supabase = createClient();
   const [pedidos, setPedidos] = useState<Pedido[]>(pedidosIniciais);
-  const [colunaModal, setColunaModal] = useState<Status | null>(null);
+  const [filtro, setFiltro] = useState<"todos" | StatusGeral>("todos");
+  const [busca, setBusca] = useState("");
 
-  async function avancarStatus(pedido: Pedido) {
-    const proximo = PROXIMO_STATUS[pedido.status];
-    if (!proximo) return;
+  async function atualizarStatus(pedido: Pedido, novoStatus: StatusPedido) {
+    let codigoRastreio = pedido.codigo_rastreio;
+
+    if (novoStatus === "enviado" && pedido.tipo_entrega === "entrega" && !codigoRastreio) {
+      codigoRastreio = window.prompt(
+        "Código de rastreio (opcional, deixe em branco se não tiver):",
+        ""
+      );
+      if (codigoRastreio !== null) codigoRastreio = codigoRastreio.trim() || null;
+      else codigoRastreio = pedido.codigo_rastreio;
+    }
 
     const { error } = await supabase
       .from("pedidos")
-      .update({ status: proximo })
+      .update({ status: novoStatus, codigo_rastreio: codigoRastreio })
       .eq("id", pedido.id);
 
     if (error) {
@@ -104,74 +124,45 @@ export default function AdminPedidosClient({
     }
 
     setPedidos((atuais) =>
-      atuais.map((p) => (p.id === pedido.id ? { ...p, status: proximo } : p))
+      atuais.map((p) =>
+        p.id === pedido.id ? { ...p, status: novoStatus, codigo_rastreio: codigoRastreio } : p
+      )
     );
   }
 
-  const totalHoje = pedidos.reduce((soma, p) => soma + p.valor_total, 0);
+  const contagens = useMemo(() => {
+    const mapa: Partial<Record<StatusGeral, number>> = {};
+    for (const pedido of pedidos) {
+      const geral = statusGeral(pedido);
+      mapa[geral] = (mapa[geral] ?? 0) + 1;
+    }
+    return mapa;
+  }, [pedidos]);
 
-  function renderPedidoCard(pedido: Pedido) {
-    return (
-      <div
-        key={pedido.id}
-        className="rounded-md border-2 border-paperLine/50 bg-white p-4"
-      >
-        <div className="flex items-center justify-between">
-          <span className="font-bold text-ink">{pedido.cliente_nome}</span>
-          <span className="text-xs text-ink/50">
-            {formatarHorario(pedido.criado_em)}
-          </span>
-        </div>
-        <p className="mt-1 text-xs text-ink/60">
-          {pedido.tipo_entrega === "entrega"
-            ? `Entrega — ${pedido.endereco}`
-            : "Retirada no balcão"}
-        </p>
-        <ul className="mt-2 space-y-0.5 text-xs text-ink/70">
-          {pedido.itens_pedido.map((item) => (
-            <li key={item.id}>
-              {item.quantidade}x {item.produto_nome}
-            </li>
-          ))}
-        </ul>
-        <p className="mt-2 font-bold text-flame">
-          {formatarPreco(pedido.valor_total)}
-        </p>
-        <div className="mt-3 flex gap-2">
-          <a
-            href={linkWhatsapp(pedido)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex flex-1 items-center justify-center gap-1 rounded-md border-2 border-mustard px-2 py-1.5 text-xs font-bold text-ink transition hover:bg-mustard"
-          >
-            <MessageCircle size={14} /> Avisar
-          </a>
-          {PROXIMO_STATUS[pedido.status] && (
-            <button
-              onClick={() => avancarStatus(pedido)}
-              className="flex-1 rounded-md bg-ink px-2 py-1.5 text-xs font-bold text-white transition hover:opacity-90"
-            >
-              Avançar
-            </button>
-          )}
-        </div>
-      </div>
-    );
-  }
+  const pedidosFiltrados = useMemo(() => {
+    const buscaNormalizada = busca.trim().toLowerCase();
+    return pedidos.filter((pedido) => {
+      const passaFiltro = filtro === "todos" || statusGeral(pedido) === filtro;
+      const passaBusca =
+        !buscaNormalizada || pedido.cliente_nome.toLowerCase().includes(buscaNormalizada);
+      return passaFiltro && passaBusca;
+    });
+  }, [pedidos, filtro, busca]);
 
-  const pedidosDoModal = colunaModal
-    ? pedidos.filter((p) => p.status === colunaModal)
-    : [];
+  const faturamentoHoje = pedidos.reduce(
+    (soma, p) => (p.pagamento_status === "aprovado" ? soma + p.valor_total : soma),
+    0
+  );
 
   return (
     <main className="px-6 py-10 sm:px-10">
       <div className="mx-auto max-w-6xl">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
-            <p className="text-sm font-bold uppercase tracking-widest text-flame">
-              serve bem
+            <p className="text-sm font-bold uppercase tracking-widest text-accent">
+              vero store
             </p>
-            <h1 className="mt-1 font-display text-4xl tracking-wide text-ink">
+            <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-ink">
               Pedidos de hoje
             </h1>
             {totalPedidosAnteriores > 0 && (
@@ -185,93 +176,141 @@ export default function AdminPedidosClient({
           </div>
           <div className="flex gap-6 text-sm text-ink/70">
             <div>
-              <p className="font-display text-2xl tracking-wide text-ink">
+              <p className="text-xl font-extrabold text-ink">
                 {pedidos.length}
               </p>
               <p>pedidos</p>
             </div>
             <div>
-              <p className="font-display text-2xl tracking-wide text-ink">
-                {formatarPreco(totalHoje)}
+              <p className="text-xl font-extrabold text-ink">
+                {formatarPreco(faturamentoHoje)}
               </p>
               <p>faturamento</p>
             </div>
           </div>
         </div>
 
-        <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {COLUNAS.map((coluna) => {
-            const pedidosDaColuna = pedidos.filter(
-              (p) => p.status === coluna.status
-            );
-            const visiveis = pedidosDaColuna.slice(0, LIMITE_VISIVEL);
-            const restantes = pedidosDaColuna.length - visiveis.length;
-
-            return (
-              <div key={coluna.status}>
-                <div className="flex items-center gap-2">
-                  <span className={`h-2.5 w-2.5 rounded-full ${coluna.cor}`} />
-                  <h2 className="font-display text-lg tracking-wide text-ink">
-                    {coluna.titulo}
-                  </h2>
-                  <span className="text-ink/40">
-                    ({pedidosDaColuna.length})
-                  </span>
-                </div>
-                <div className="mt-3 space-y-3">
-                  {pedidosDaColuna.length === 0 ? (
-                    <p className="rounded-md border-2 border-dashed border-paperLine/50 p-4 text-center text-xs text-ink/40">
-                      Nenhum pedido aqui
-                    </p>
-                  ) : (
-                    <>
-                      {visiveis.map(renderPedidoCard)}
-                      {restantes > 0 && (
-                        <button
-                          onClick={() => setColunaModal(coluna.status)}
-                          className="w-full rounded-md border-2 border-dashed border-paperLine px-3 py-2 text-xs font-bold text-ink/60 transition hover:border-flame hover:text-flame"
-                        >
-                          Ver todos ({pedidosDaColuna.length})
-                        </button>
-                      )}
-                    </>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Modal com a lista completa de uma coluna */}
-      {colunaModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
-          onClick={() => setColunaModal(null)}
-        >
-          <div
-            className="flex max-h-[85vh] w-full max-w-lg flex-col rounded-lg bg-paper p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between border-b border-paperLine pb-3">
-              <h3 className="font-display text-2xl tracking-wide text-ink">
-                {COLUNAS.find((c) => c.status === colunaModal)?.titulo} (
-                {pedidosDoModal.length})
-              </h3>
+        <div className="mt-6 flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap gap-2">
+            {FILTROS.map((item) => (
               <button
-                onClick={() => setColunaModal(null)}
-                className="text-ink/50 transition hover:text-flame"
-                aria-label="Fechar"
+                key={item.valor}
+                type="button"
+                onClick={() => setFiltro(item.valor)}
+                className={`rounded-full px-3 py-1.5 text-xs font-bold uppercase tracking-wide transition ${
+                  filtro === item.valor
+                    ? "bg-ink text-bg"
+                    : "bg-line/60 text-inkSoft hover:bg-line"
+                }`}
               >
-                <X size={22} />
+                {item.rotulo}
+                {item.valor !== "todos" && contagens[item.valor] ? ` (${contagens[item.valor]})` : ""}
               </button>
-            </div>
-            <div className="mt-4 space-y-3 overflow-y-auto">
-              {pedidosDoModal.map(renderPedidoCard)}
-            </div>
+            ))}
           </div>
+          <input
+            type="text"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            placeholder="Buscar por cliente..."
+            className="ml-auto w-full max-w-[220px] border-2 border-line bg-bg px-3 py-1.5 text-sm text-ink outline-none"
+          />
         </div>
-      )}
+
+        {pedidosFiltrados.length === 0 ? (
+          <p className="mt-8 border-2 border-dashed border-line p-6 text-center text-sm text-ink/40">
+            Nenhum pedido encontrado.
+          </p>
+        ) : (
+          <div className="mt-6 overflow-x-auto border-2 border-line bg-bg">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-surface text-xs uppercase tracking-wide text-ink/50">
+                <tr>
+                  <th className="px-4 py-3">Hora</th>
+                  <th className="px-4 py-3">Cliente</th>
+                  <th className="px-4 py-3">Itens</th>
+                  <th className="px-4 py-3">Entrega</th>
+                  <th className="px-4 py-3">Total</th>
+                  <th className="px-4 py-3">Status</th>
+                  <th className="px-4 py-3">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-line">
+                {pedidosFiltrados.map((pedido) => {
+                  const geral = statusGeral(pedido);
+                  return (
+                    <tr key={pedido.id} className="align-top">
+                      <td className="whitespace-nowrap px-4 py-3 text-ink/60">
+                        {formatarHorario(pedido.criado_em)}
+                      </td>
+                      <td className="px-4 py-3 font-bold text-ink">{pedido.cliente_nome}</td>
+                      <td className="px-4 py-3 text-ink/60">
+                        <ul className="space-y-0.5">
+                          {pedido.itens_pedido.map((item) => (
+                            <li key={item.id}>
+                              {item.quantidade}x {item.produto_nome}
+                              {(item.tamanho || item.cor) &&
+                                ` (${[item.tamanho, item.cor].filter(Boolean).join(", ")})`}
+                            </li>
+                          ))}
+                        </ul>
+                      </td>
+                      <td className="px-4 py-3 text-ink/60">
+                        {pedido.tipo_entrega === "entrega"
+                          ? `Entrega — ${pedido.endereco}`
+                          : "Retirada na loja"}
+                        {pedido.codigo_rastreio && (
+                          <p className="mt-1 text-xs text-inkSoft">
+                            Rastreio: {pedido.codigo_rastreio}
+                          </p>
+                        )}
+                      </td>
+                      <td className="whitespace-nowrap px-4 py-3 font-bold text-accent">
+                        {formatarPreco(pedido.valor_total)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`inline-block rounded-full px-2.5 py-1 text-xs font-bold ${COR_STATUS_GERAL[geral]}`}
+                        >
+                          {ETIQUETA_STATUS_GERAL[geral]}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-wrap items-center gap-2">
+                          {pedido.pagamento_status === "aprovado" && (
+                            <select
+                              value={pedido.status}
+                              onChange={(e) =>
+                                atualizarStatus(pedido, e.target.value as StatusPedido)
+                              }
+                              className="border-2 border-line bg-bg px-2 py-1 text-xs font-bold text-ink outline-none"
+                            >
+                              {ETAPAS_PEDIDO.map((etapa) => (
+                                <option key={etapa.valor} value={etapa.valor}>
+                                  {etapa.rotulo}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+                          <a
+                            href={linkWhatsapp(pedido)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center gap-1 border-2 border-accent px-2 py-1 text-xs font-bold text-ink transition hover:bg-accent"
+                            aria-label={`Avisar ${pedido.cliente_nome} pelo WhatsApp`}
+                          >
+                            <MessageCircle size={14} /> Avisar
+                          </a>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </main>
   );
 }

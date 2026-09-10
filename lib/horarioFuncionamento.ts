@@ -1,16 +1,16 @@
 // Horário de funcionamento — ajuste esses valores conforme o funcionamento
-// real da hamburgueria. No futuro isso pode virar uma tela editável no painel.
+// real da loja. No futuro isso pode virar uma tela editável no painel.
 // Índices: 0 = domingo, 1 = segunda, ... 6 = sábado. "null" = fechado no dia.
 type HorarioDoDia = { abre: string; fecha: string } | null;
 
 export const horarioFuncionamento: Record<number, HorarioDoDia> = {
-  0: { abre: "18:00", fecha: "23:30" }, // domingo
-  1: { abre: "18:00", fecha: "23:30" }, // segunda
-  2: null, // terça — fechado
-  3: { abre: "18:00", fecha: "23:30" }, // quarta
-  4: { abre: "18:00", fecha: "23:30" }, // quinta
-  5: { abre: "18:00", fecha: "23:59" }, // sexta
-  6: { abre: "18:00", fecha: "23:59" }, // sábado
+  0: null, // domingo — fechado
+  1: { abre: "09:00", fecha: "19:00" }, // segunda
+  2: { abre: "09:00", fecha: "19:00" }, // terça
+  3: { abre: "09:00", fecha: "19:00" }, // quarta
+  4: { abre: "09:00", fecha: "19:00" }, // quinta
+  5: { abre: "09:00", fecha: "19:00" }, // sexta
+  6: { abre: "09:00", fecha: "17:00" }, // sábado
 };
 
 export function estaAberto(agora: Date = new Date()): boolean {

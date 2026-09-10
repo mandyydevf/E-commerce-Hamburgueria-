@@ -8,7 +8,9 @@ export default async function AdminProdutosPage() {
 
   const { data: produtos } = await supabase
     .from("produtos")
-    .select("id, nome, descricao, preco, categoria, imagem_url, disponivel")
+    .select(
+      "id, nome, descricao, preco, preco_antigo, categoria, imagem_url, disponivel, produto_variacoes(tamanho, cor, estoque)"
+    )
     .order("criado_em", { ascending: false });
 
   return <AdminProdutosClient produtosIniciais={produtos ?? []} />;

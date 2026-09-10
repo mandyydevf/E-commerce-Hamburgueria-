@@ -1,23 +1,17 @@
 import type { Metadata } from "next";
-import { Bebas_Neue, Karla } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { CarrinhoProvider } from "@/lib/CartContext";
 
-const bebasNeue = Bebas_Neue({
+const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-display",
-  weight: ["400"],
-});
-
-const karla = Karla({
-  subsets: ["latin"],
-  variable: "--font-body",
-  weight: ["400", "600", "700"],
+  variable: "--font-sans",
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 export const metadata: Metadata = {
-  title: "Serve Bem Hamburgueria",
-  description: "Hambúrgueres artesanais — peça pelo cardápio online",
+  title: "Vero Store",
+  description: "Vero Store — moda alternativa, peças autorais fora do padrão",
 };
 
 export default function RootLayout({
@@ -26,8 +20,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR" className={`${bebasNeue.variable} ${karla.variable}`}>
-      <body className="font-body bg-bg">
+    <html lang="pt-BR" className={inter.variable}>
+      <body className="font-body bg-bg text-ink">
         <CarrinhoProvider>{children}</CarrinhoProvider>
       </body>
     </html>

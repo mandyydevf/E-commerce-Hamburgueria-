@@ -84,8 +84,10 @@ export default function FinalizarPage() {
     // 2) Cria os itens do pedido
     const itensParaSalvar = itens.map((item) => ({
       pedido_id: novoPedidoId,
-      produto_id: item.id,
+      produto_id: item.produtoId,
       produto_nome: item.nome,
+      tamanho: item.tamanho,
+      cor: item.cor,
       quantidade: item.quantidade,
       preco_unitario: item.preco,
     }));
@@ -144,14 +146,14 @@ export default function FinalizarPage() {
   // --- Carrinho vazio (sem pedido em andamento) ---
   if (itens.length === 0 && etapa === "formulario") {
     return (
-      <main className="flex min-h-[70vh] items-center justify-center bg-night px-6">
+      <main className="flex min-h-[70vh] items-center justify-center bg-bg px-6">
         <div className="text-center">
-          <p className="text-cream/50">Seu carrinho está vazio.</p>
+          <p className="text-inkSoft">Seu carrinho está vazio.</p>
           <Link
             href="/"
-            className="mt-4 inline-block rounded-md bg-flame px-5 py-2 font-bold text-night"
+            className="mt-4 inline-block bg-ink px-5 py-2 font-bold text-bg"
           >
-            Ver cardápio
+            Ver coleção
           </Link>
         </div>
       </main>
@@ -161,12 +163,12 @@ export default function FinalizarPage() {
   // --- Tela de pagamento Pix ---
   if (etapa === "pagamento") {
     return (
-      <main className="flex min-h-[80vh] items-center justify-center bg-night px-6 py-12">
-        <div className="w-full max-w-sm rounded-lg border border-charline bg-nightSurface p-6 text-center">
-          <p className="text-sm font-bold uppercase tracking-widest text-mustard">
+      <main className="flex min-h-[80vh] items-center justify-center bg-bg px-6 py-12">
+        <div className="w-full max-w-sm border border-line bg-surface p-6 text-center">
+          <p className="text-sm font-bold uppercase tracking-widest text-accent">
             pague com pix
           </p>
-          <p className="mt-1 text-2xl font-bold text-flame">
+          <p className="mt-1 text-2xl font-extrabold text-ink">
             {formatarPreco(totalPreco)}
           </p>
 
@@ -174,24 +176,24 @@ export default function FinalizarPage() {
             <img
               src={`data:image/png;base64,${qrCodeBase64}`}
               alt="QR Code do Pix"
-              className="mx-auto mt-4 h-52 w-52 rounded-md bg-white p-2"
+              className="mx-auto mt-4 h-52 w-52 border border-line bg-white p-2"
             />
           )}
 
-          <p className="mt-4 text-xs text-cream/50">
+          <p className="mt-4 text-xs text-inkSoft">
             Escaneie o QR Code com o app do seu banco, ou copie o código abaixo
           </p>
 
           <button
             onClick={copiarCodigo}
-            className="mt-3 flex w-full items-center justify-center gap-2 rounded-md border-2 border-mustard px-4 py-2 text-sm font-bold text-mustard transition hover:bg-mustard hover:text-night"
+            className="mt-3 flex w-full items-center justify-center gap-2 border-2 border-ink px-4 py-2 text-sm font-bold uppercase tracking-wide text-ink transition hover:bg-ink hover:text-bg"
           >
             {copiado ? <Check size={16} /> : <Copy size={16} />}
             {copiado ? "Código copiado!" : "Copiar código Pix"}
           </button>
 
-          <div className="mt-6 flex items-center justify-center gap-2 text-sm text-cream/60">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-mustard" />
+          <div className="mt-6 flex items-center justify-center gap-2 text-sm text-inkSoft">
+            <span className="h-2 w-2 animate-pulse rounded-full bg-accent" />
             Aguardando confirmação do pagamento...
           </div>
         </div>
@@ -202,17 +204,17 @@ export default function FinalizarPage() {
   // --- Pagamento recusado/expirado ---
   if (etapa === "recusado") {
     return (
-      <main className="flex min-h-[70vh] items-center justify-center bg-night px-6">
-        <div className="max-w-sm rounded-lg border-2 border-red-500/60 bg-nightSurface p-8 text-center">
-          <p className="font-display text-3xl tracking-wide text-red-400">
+      <main className="flex min-h-[70vh] items-center justify-center bg-bg px-6">
+        <div className="max-w-sm border-2 border-red-500/60 bg-surface p-8 text-center">
+          <p className="text-2xl font-extrabold uppercase tracking-tight text-red-500">
             Pagamento não concluído
           </p>
-          <p className="mt-2 text-sm text-cream/60">
+          <p className="mt-2 text-sm text-inkSoft">
             O Pix não foi aprovado ou expirou. Você pode tentar novamente.
           </p>
           <Link
             href="/carrinho"
-            className="mt-6 inline-block rounded-md bg-flame px-5 py-2 font-bold text-night"
+            className="mt-6 inline-block bg-ink px-5 py-2 font-bold text-bg"
           >
             Voltar ao carrinho
           </Link>
@@ -224,20 +226,35 @@ export default function FinalizarPage() {
   // --- Pedido pago com sucesso ---
   if (etapa === "concluido") {
     return (
-      <main className="flex min-h-[70vh] items-center justify-center bg-night px-6">
-        <div className="max-w-sm rounded-lg border-2 border-mustard bg-nightSurface p-8 text-center">
-          <p className="font-display text-3xl tracking-wide text-mustard">
+      <main className="flex min-h-[70vh] items-center justify-center bg-bg px-6">
+        <div className="max-w-sm border-2 border-accent bg-surface p-8 text-center">
+          <p className="text-2xl font-extrabold uppercase tracking-tight text-accent">
             Pagamento confirmado!
           </p>
-          <p className="mt-2 text-sm text-cream/60">
-            Seu pedido já está com a hamburgueria e logo entra em preparo 🔥
+          <p className="mt-2 text-sm text-inkSoft">
+            Seu pedido já está confirmado e logo entra em separação e envio 📦
           </p>
+          {pedidoId && (
+            <Link
+              href={`/pedido/${pedidoId}`}
+              className="mt-6 block bg-ink px-5 py-2 font-bold text-bg"
+            >
+              Acompanhar meu pedido
+            </Link>
+          )}
           <Link
             href="/"
-            className="mt-6 inline-block rounded-md bg-flame px-5 py-2 font-bold text-night"
+            className="mt-3 block border border-line px-5 py-2 font-bold text-ink"
           >
-            Voltar ao cardápio
+            Voltar à loja
           </Link>
+          <p className="mt-4 text-xs text-inkSoft">
+            Perdeu o link? Encontre seus pedidos de novo em{" "}
+            <Link href="/meus-pedidos" className="underline">
+              Meus pedidos
+            </Link>
+            , buscando pelo telefone usado na compra.
+          </p>
         </div>
       </main>
     );
@@ -245,99 +262,99 @@ export default function FinalizarPage() {
 
   // --- Formulário de checkout ---
   return (
-    <main className="min-h-screen bg-night px-6 py-12 sm:px-10">
+    <main className="min-h-screen bg-bg px-6 py-12 sm:px-10">
       <div className="mx-auto max-w-2xl">
-        <h1 className="font-display text-4xl tracking-wide text-cream">
+        <h1 className="text-3xl font-extrabold tracking-tight text-ink">
           Finalizar pedido
         </h1>
 
         <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[1.2fr_1fr]">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-bold text-cream/70">
+              <label className="block text-sm font-bold text-inkSoft">
                 Nome
               </label>
               <input
                 required
                 value={nome}
                 onChange={(e) => setNome(e.target.value)}
-                className="mt-1 w-full rounded-md border border-charline bg-cream px-3 py-2 text-ink outline-none"
+                className="mt-1 w-full border border-line bg-bg px-3 py-2 text-ink outline-none"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-cream/70">
+              <label className="block text-sm font-bold text-inkSoft">
                 Telefone
               </label>
               <input
                 required
                 value={telefone}
                 onChange={(e) => setTelefone(e.target.value)}
-                className="mt-1 w-full rounded-md border border-charline bg-cream px-3 py-2 text-ink outline-none"
+                className="mt-1 w-full border border-line bg-bg px-3 py-2 text-ink outline-none"
                 placeholder="(00) 00000-0000"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-bold text-cream/70">
+              <label className="block text-sm font-bold text-inkSoft">
                 E-mail (opcional, pra comprovante)
               </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="mt-1 w-full rounded-md border border-charline bg-cream px-3 py-2 text-ink outline-none"
+                className="mt-1 w-full border border-line bg-bg px-3 py-2 text-ink outline-none"
                 placeholder="seuemail@exemplo.com"
               />
             </div>
 
             <div>
-              <span className="block text-sm font-bold text-cream/70">
+              <span className="block text-sm font-bold text-inkSoft">
                 Como você quer receber?
               </span>
               <div className="mt-2 flex gap-3">
                 <button
                   type="button"
                   onClick={() => setTipoEntrega("retirada")}
-                  className={`flex-1 rounded-md border-2 px-3 py-2 text-sm font-bold transition ${
+                  className={`flex-1 border-2 px-3 py-2 text-sm font-bold transition ${
                     tipoEntrega === "retirada"
-                      ? "border-flame bg-flame text-night"
-                      : "border-charline bg-nightSurface text-cream/70"
+                      ? "border-ink bg-ink text-bg"
+                      : "border-line bg-bg text-inkSoft"
                   }`}
                 >
-                  Retirar no balcão
+                  Retirar na loja
                 </button>
                 <button
                   type="button"
                   onClick={() => setTipoEntrega("entrega")}
-                  className={`flex-1 rounded-md border-2 px-3 py-2 text-sm font-bold transition ${
+                  className={`flex-1 border-2 px-3 py-2 text-sm font-bold transition ${
                     tipoEntrega === "entrega"
-                      ? "border-flame bg-flame text-night"
-                      : "border-charline bg-nightSurface text-cream/70"
+                      ? "border-ink bg-ink text-bg"
+                      : "border-line bg-bg text-inkSoft"
                   }`}
                 >
-                  Entrega
+                  Receber em casa
                 </button>
               </div>
             </div>
 
             {tipoEntrega === "entrega" && (
               <div>
-                <label className="block text-sm font-bold text-cream/70">
+                <label className="block text-sm font-bold text-inkSoft">
                   Endereço de entrega
                 </label>
                 <input
                   required
                   value={endereco}
                   onChange={(e) => setEndereco(e.target.value)}
-                  className="mt-1 w-full rounded-md border border-charline bg-cream px-3 py-2 text-ink outline-none"
+                  className="mt-1 w-full border border-line bg-bg px-3 py-2 text-ink outline-none"
                   placeholder="Rua, número, bairro"
                 />
               </div>
             )}
 
             {erro && (
-              <p className="text-sm text-red-400" role="alert">
+              <p className="text-sm text-red-500" role="alert">
                 {erro}
               </p>
             )}
@@ -345,27 +362,29 @@ export default function FinalizarPage() {
             <button
               type="submit"
               disabled={enviando}
-              className="w-full rounded-md bg-flame px-4 py-3 font-bold text-night transition hover:opacity-90 disabled:opacity-60"
+              className="w-full bg-ink px-4 py-3 text-sm font-bold uppercase tracking-wide text-bg transition hover:opacity-90 disabled:opacity-60"
             >
               {enviando ? "Gerando Pix..." : "Ir para o pagamento"}
             </button>
           </form>
 
-          <div className="h-fit rounded-lg border border-charline bg-nightSurface p-5">
-            <h2 className="font-display text-xl tracking-wide text-cream">
+          <div className="h-fit border border-line bg-surface p-5">
+            <h2 className="text-lg font-extrabold uppercase tracking-tight text-ink">
               Resumo do pedido
             </h2>
             <ul className="mt-3 space-y-2 text-sm">
               {itens.map((item) => (
-                <li key={item.id} className="flex justify-between text-cream/60">
+                <li key={item.chave} className="flex justify-between text-inkSoft">
                   <span>
                     {item.quantidade}x {item.nome}
+                    {(item.tamanho || item.cor) &&
+                      ` (${[item.tamanho, item.cor].filter(Boolean).join(", ")})`}
                   </span>
                   <span>{formatarPreco(item.preco * item.quantidade)}</span>
                 </li>
               ))}
             </ul>
-            <div className="mt-4 flex justify-between border-t border-charline pt-3 font-display text-xl tracking-wide text-cream">
+            <div className="mt-4 flex justify-between border-t border-line pt-3 text-lg font-extrabold text-ink">
               <span>Total</span>
               <span>{formatarPreco(totalPreco)}</span>
             </div>

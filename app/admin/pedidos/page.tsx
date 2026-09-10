@@ -11,9 +11,8 @@ export default async function AdminPedidosPage() {
   const { data: pedidos } = await supabase
     .from("pedidos")
     .select(
-      "id, cliente_nome, cliente_telefone, tipo_entrega, endereco, status, valor_total, criado_em, itens_pedido(id, produto_nome, quantidade, preco_unitario)"
+      "id, cliente_nome, cliente_telefone, tipo_entrega, endereco, status, pagamento_status, codigo_rastreio, transportadora, valor_total, criado_em, itens_pedido(id, produto_nome, tamanho, cor, quantidade, preco_unitario)"
     )
-    .eq("pagamento_status", "aprovado")
     .gte("criado_em", inicio)
     .lt("criado_em", fim)
     .order("criado_em", { ascending: false });
@@ -21,7 +20,6 @@ export default async function AdminPedidosPage() {
   const { count: totalAnteriores } = await supabase
     .from("pedidos")
     .select("id", { count: "exact", head: true })
-    .eq("pagamento_status", "aprovado")
     .lt("criado_em", inicio);
 
   return (

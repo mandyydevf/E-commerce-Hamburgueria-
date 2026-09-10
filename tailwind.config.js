@@ -7,22 +7,20 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Tema escuro (loja / lado do cliente)
-        night: "#1C1410",
-        nightSurface: "#241B15",
-        cream: "#F5EDE4",
-        charline: "#4A3B30",
-        // Cores de marca (usadas nos dois temas)
-        flame: "#FF5A1F",
-        mustard: "#FFC53D",
-        // Tema claro (painel admin)
-        paper: "#F6F1EA",
-        paperLine: "#E4DACB",
-        ink: "#2A211B",
+        // Paleta única, clara e neutra — loja e painel admin, padrão de
+        // e-commerce de mercado (fundo branco, foto do produto em destaque).
+        bg: "#FFFFFF",
+        surface: "#F7F7F8",
+        line: "#E4E4E7",
+        ink: "#171717",
+        inkSoft: "#6B6B70",
+        // Vermelho de destaque — usado com moderação (selos de desconto,
+        // avisos, detalhes pontuais), não como cor de fundo geral.
+        accent: "#E01233",
       },
       fontFamily: {
-        display: ["var(--font-display)"],
-        body: ["var(--font-body)"],
+        display: ["var(--font-sans)"],
+        body: ["var(--font-sans)"],
       },
     },
   },

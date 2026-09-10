@@ -3,13 +3,14 @@
 @tailwind utilities;
 
 :root {
-  --font-display: "Bebas Neue", sans-serif;
-  --font-body: "Karla", sans-serif;
+  /* Uma família só pro site inteiro — padrão da maioria das lojas online
+     reais (menos carga visual, mais foco na foto do produto). */
+  --font-sans: "Inter", sans-serif;
 }
 
 body {
-  background-color: #f6f1ea;
-  color: #2a211b;
+  background-color: #ffffff;
+  color: #171717;
 }
 
 /* Foco visível no teclado, por acessibilidade */
@@ -18,7 +19,7 @@ button:focus-visible,
 input:focus-visible,
 textarea:focus-visible,
 select:focus-visible {
-  outline: 2px solid #ff5a1f;
+  outline: 2px solid #e01233;
   outline-offset: 2px;
 }
 
@@ -78,9 +79,9 @@ select:focus-visible {
   display: block;
   max-width: 90vw;
   max-height: 85vh;
-  border-radius: 12px;
+  border-radius: 8px;
   object-fit: contain;
-  background: #241b15;
+  background: #ffffff;
 }
 
 .lightbox-close {
@@ -93,10 +94,10 @@ select:focus-visible {
   align-items: center;
   justify-content: center;
   border-radius: 9999px;
-  background: #ff5a1f;
-  color: #1c1410;
+  background: #171717;
+  color: #ffffff;
   font-size: 20px;
   line-height: 1;
   text-decoration: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }

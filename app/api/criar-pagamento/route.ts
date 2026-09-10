@@ -45,19 +45,19 @@ export async function POST(request: NextRequest) {
     // O Mercado Pago exige um e-mail do pagador. Como nosso checkout não
     // torna isso obrigatório, usamos um e-mail interno como reserva.
     const emailPagador =
-      email && String(email).trim() ? String(email).trim() : `pedido-${pedidoId}@servebem.com`;
+      email && String(email).trim() ? String(email).trim() : `pedido-${pedidoId}@verostore.com`;
 
     const partesNome = String(nome).trim().split(" ");
 
     const resultado = await mercadoPagoPayment.create({
       body: {
         transaction_amount: valorReal,
-        description: `Pedido Serve Bem #${String(pedidoId).slice(0, 8)}`,
+        description: `Pedido Vero Store #${String(pedidoId).slice(0, 8)}`,
         payment_method_id: "pix",
         payer: {
           email: emailPagador,
           first_name: partesNome[0] || "Cliente",
-          last_name: partesNome.slice(1).join(" ") || "Serve Bem",
+          last_name: partesNome.slice(1).join(" ") || "Vero Store",
         },
         external_reference: pedidoId,
         notification_url: process.env.SITE_URL

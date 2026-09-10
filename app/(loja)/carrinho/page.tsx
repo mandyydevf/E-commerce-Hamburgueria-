@@ -9,42 +9,45 @@ export default function CarrinhoPage() {
   const { itens, alterarQuantidade, removerItem, totalPreco } = useCarrinho();
 
   return (
-    <main className="min-h-screen bg-night px-6 py-12 sm:px-10">
+    <main className="min-h-screen bg-bg px-6 py-12 sm:px-10">
       <div className="mx-auto max-w-2xl">
         <Link
           href="/"
-          className="inline-flex items-center gap-1 text-sm font-bold text-cream/60 transition hover:text-flame"
+          className="inline-flex items-center gap-1 text-sm font-bold text-inkSoft transition hover:text-ink"
         >
-          <ArrowLeft size={16} /> Voltar ao cardápio
+          <ArrowLeft size={16} /> Voltar à coleção
         </Link>
 
-        <h1 className="mt-3 font-display text-4xl tracking-wide text-cream">
+        <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-ink">
           Seu carrinho
         </h1>
 
         {itens.length === 0 ? (
-          <div className="mt-8 rounded-lg border border-dashed border-charline bg-nightSurface p-8 text-center">
-            <p className="text-cream/50">Seu carrinho está vazio por enquanto.</p>
+          <div className="mt-8 border border-dashed border-line bg-surface p-8 text-center">
+            <p className="text-inkSoft">Seu carrinho está vazio por enquanto.</p>
             <Link
               href="/"
-              className="mt-4 inline-block rounded-md bg-flame px-5 py-2 font-bold text-night"
+              className="mt-4 inline-block bg-ink px-5 py-2 font-bold text-bg"
             >
-              Ver cardápio
+              Ver coleção
             </Link>
           </div>
         ) : (
           <>
-            <ul className="mt-6 divide-y divide-charline rounded-lg border border-charline bg-nightSurface">
+            <ul className="mt-6 divide-y divide-line border border-line">
               {itens.map((item) => (
                 <li
-                  key={item.id}
+                  key={item.chave}
                   className="flex flex-wrap items-center justify-between gap-3 p-4"
                 >
                   <div className="min-w-[140px] flex-1">
-                    <p className="font-display text-xl tracking-wide text-cream">
-                      {item.nome}
-                    </p>
-                    <p className="text-sm text-cream/50">
+                    <p className="font-bold text-ink">{item.nome}</p>
+                    <p className="text-sm text-inkSoft">
+                      {(item.tamanho || item.cor) && (
+                        <>
+                          {[item.tamanho, item.cor].filter(Boolean).join(" · ")} ·{" "}
+                        </>
+                      )}
                       {formatarPreco(item.preco)} cada
                     </p>
                   </div>
@@ -53,36 +56,36 @@ export default function CarrinhoPage() {
                     <button
                       type="button"
                       onClick={() =>
-                        alterarQuantidade(item.id, item.quantidade - 1)
+                        alterarQuantidade(item.chave, item.quantidade - 1)
                       }
-                      className="flex h-8 w-8 items-center justify-center rounded-md border border-cream/30 text-cream"
+                      className="flex h-8 w-8 items-center justify-center border border-line text-ink"
                       aria-label={`Diminuir quantidade de ${item.nome}`}
                     >
                       <Minus size={14} />
                     </button>
-                    <span className="w-6 text-center font-bold text-cream">
+                    <span className="w-6 text-center font-bold text-ink">
                       {item.quantidade}
                     </span>
                     <button
                       type="button"
                       onClick={() =>
-                        alterarQuantidade(item.id, item.quantidade + 1)
+                        alterarQuantidade(item.chave, item.quantidade + 1)
                       }
-                      className="flex h-8 w-8 items-center justify-center rounded-md border border-cream/30 text-cream"
+                      className="flex h-8 w-8 items-center justify-center border border-line text-ink"
                       aria-label={`Aumentar quantidade de ${item.nome}`}
                     >
                       <Plus size={14} />
                     </button>
                   </div>
 
-                  <p className="w-20 text-right font-bold text-flame">
+                  <p className="w-20 text-right font-bold text-ink">
                     {formatarPreco(item.preco * item.quantidade)}
                   </p>
 
                   <button
                     type="button"
-                    onClick={() => removerItem(item.id)}
-                    className="text-cream/30 transition hover:text-flame"
+                    onClick={() => removerItem(item.chave)}
+                    className="text-inkSoft transition hover:text-accent"
                     aria-label={`Remover ${item.nome}`}
                   >
                     <Trash2 size={18} />
@@ -91,18 +94,18 @@ export default function CarrinhoPage() {
               ))}
             </ul>
 
-            <div className="mt-6 flex items-center justify-between rounded-lg bg-flame px-5 py-4 text-night">
-              <span className="font-display text-2xl tracking-wide">
+            <div className="mt-6 flex items-center justify-between bg-surface px-5 py-4">
+              <span className="text-lg font-extrabold uppercase tracking-tight text-ink">
                 Total
               </span>
-              <span className="font-display text-2xl tracking-wide">
+              <span className="text-lg font-extrabold text-ink">
                 {formatarPreco(totalPreco)}
               </span>
             </div>
 
             <Link
               href="/finalizar"
-              className="mt-6 block rounded-md border-2 border-flame px-5 py-3 text-center font-bold text-flame transition hover:bg-flame hover:text-night"
+              className="mt-6 block bg-ink px-5 py-3 text-center text-sm font-bold uppercase tracking-wide text-bg transition hover:opacity-90"
             >
               Finalizar pedido
             </Link>

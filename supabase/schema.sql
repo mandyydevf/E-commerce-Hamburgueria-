@@ -1,14 +1,17 @@
 -- ============================================================
--- Script de configuração do banco de dados — Serve Bem Hamburgueria
+-- Script de configuração do banco de dados — Vero Store
 -- Rode este arquivo inteiro no Supabase: SQL Editor > New query
 -- ============================================================
 
--- 1) Tabela de produtos (itens do cardápio)
+-- 1) Tabela de produtos (itens do catálogo)
 create table if not exists produtos (
   id uuid primary key default gen_random_uuid(),
   nome text not null,
   descricao text,
   preco numeric(10, 2) not null check (preco >= 0),
+  -- Preço "de" (antigo), opcional — quando preenchido e maior que o preço
+  -- atual, a loja mostra riscado + o desconto (ex: promoção).
+  preco_antigo numeric(10, 2) check (preco_antigo is null or preco_antigo > preco),
   categoria text,
   imagem_url text,
   disponivel boolean not null default true,
@@ -37,6 +40,39 @@ create policy "Usuarios logados podem excluir produtos"
   using (true);
 
 
+-- 1.1) Variações de cada produto (tamanho + cor), com estoque individual
+-- de cada combinação (ex: Preto/M tem 3, Preto/G tem 0)
+create table if not exists produto_variacoes (
+  id uuid primary key default gen_random_uuid(),
+  produto_id uuid not null references produtos(id) on delete cascade,
+  tamanho text not null,
+  cor text not null,
+  estoque integer not null default 0 check (estoque >= 0),
+  unique (produto_id, tamanho, cor)
+);
+
+alter table produto_variacoes enable row level security;
+
+create policy "Qualquer pessoa pode ver as variacoes"
+  on produto_variacoes for select
+  using (true);
+
+create policy "Usuarios logados podem criar variacoes"
+  on produto_variacoes for insert
+  to authenticated
+  with check (true);
+
+create policy "Usuarios logados podem editar variacoes"
+  on produto_variacoes for update
+  to authenticated
+  using (true);
+
+create policy "Usuarios logados podem excluir variacoes"
+  on produto_variacoes for delete
+  to authenticated
+  using (true);
+
+
 -- 2) Tabela de pedidos (cabeçalho do pedido feito pelo cliente)
 create table if not exists pedidos (
   id uuid primary key default gen_random_uuid(),
@@ -44,12 +80,14 @@ create table if not exists pedidos (
   cliente_telefone text not null,
   tipo_entrega text not null check (tipo_entrega in ('retirada', 'entrega')),
   endereco text,
-  status text not null default 'recebido'
-    check (status in ('recebido', 'preparo', 'pronto', 'entregue')),
+  status text not null default 'separacao'
+    check (status in ('separacao', 'enviado', 'entregue', 'cancelado')),
   valor_total numeric(10, 2) not null check (valor_total >= 0),
   mercado_pago_payment_id text,
   pagamento_status text not null default 'pendente'
     check (pagamento_status in ('pendente', 'aprovado', 'rejeitado', 'expirado')),
+  codigo_rastreio text,
+  transportadora text,
   criado_em timestamptz not null default now()
 );
 
@@ -78,8 +116,10 @@ create policy "Usuarios logados podem atualizar pedidos"
 create table if not exists itens_pedido (
   id uuid primary key default gen_random_uuid(),
   pedido_id uuid not null references pedidos(id) on delete cascade,
-  produto_id uuid references produtos(id),
+  produto_id uuid references produtos(id) on delete set null,
   produto_nome text not null,
+  tamanho text,
+  cor text,
   quantidade integer not null check (quantidade > 0),
   preco_unitario numeric(10, 2) not null check (preco_unitario >= 0)
 );

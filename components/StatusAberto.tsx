@@ -19,15 +19,11 @@ export default function StatusAberto() {
 
   return (
     <span
-      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide ${
-        aberto ? "bg-mustard text-night" : "bg-white/10 text-cream/60"
-      }`}
+      className="hidden items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-inkSoft sm:inline-flex"
       title={textoHorarioHoje()}
     >
       <span
-        className={`h-2 w-2 rounded-full ${
-          aberto ? "bg-night" : "bg-cream/40"
-        }`}
+        className={`h-1.5 w-1.5 rounded-full ${aberto ? "bg-green-600" : "bg-inkSoft/40"}`}
       />
       {aberto ? "Aberto agora" : "Fechado agora"}
     </span>
