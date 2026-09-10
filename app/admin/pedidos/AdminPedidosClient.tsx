@@ -34,6 +34,8 @@ type Pedido = {
   pagamento_status: StatusPagamento;
   codigo_rastreio: string | null;
   transportadora: string | null;
+  motivo_cancelamento: string | null;
+  cancelado_por: "cliente" | "loja" | null;
   valor_total: number;
   criado_em: string;
   itens_pedido: ItemPedido[];
@@ -274,6 +276,19 @@ export default function AdminPedidosClient({
                         >
                           {ETIQUETA_STATUS_GERAL[geral]}
                         </span>
+                        {pedido.status === "cancelado" && (
+                          <div className="mt-1 max-w-[220px] text-xs text-inkSoft">
+                            {pedido.cancelado_por === "cliente" && (
+                              <p className="font-bold text-ink">Cancelado pelo cliente</p>
+                            )}
+                            {pedido.motivo_cancelamento && <p>Motivo: {pedido.motivo_cancelamento}</p>}
+                            {pedido.pagamento_status === "aprovado" && (
+                              <p className="mt-0.5 font-bold text-accent">
+                                ⚠ Pago — estornar no Mercado Pago
+                              </p>
+                            )}
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex flex-wrap items-center gap-2">

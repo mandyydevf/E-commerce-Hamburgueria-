@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Check } from "lucide-react";
 import { createAdminClient } from "@/lib/supabaseAdmin";
 import { formatarPreco } from "@/lib/format";
+import CancelarPedido from "@/components/CancelarPedido";
 import type { StatusPagamento, StatusPedido } from "@/lib/statusPedido";
 
 export const revalidate = 0;
@@ -22,6 +23,7 @@ type Pedido = {
   pagamento_status: StatusPagamento;
   codigo_rastreio: string | null;
   transportadora: string | null;
+  motivo_cancelamento: string | null;
   valor_total: number;
   criado_em: string;
   itens_pedido: ItemPedido[];
@@ -45,7 +47,7 @@ async function getPedido(id: string): Promise<Pedido | null> {
   const { data, error } = await supabaseAdmin
     .from("pedidos")
     .select(
-      "id, tipo_entrega, status, pagamento_status, codigo_rastreio, transportadora, valor_total, criado_em, itens_pedido(id, produto_nome, tamanho, cor, quantidade, preco_unitario)"
+      "id, tipo_entrega, status, pagamento_status, codigo_rastreio, transportadora, motivo_cancelamento, valor_total, criado_em, itens_pedido(id, produto_nome, tamanho, cor, quantidade, preco_unitario)"
     )
     .eq("id", id)
     .single();
@@ -81,6 +83,14 @@ export default async function AcompanharPedidoPage({
 
   const indiceAtual = ETAPAS_ENTREGA.indexOf(pedido.status as (typeof ETAPAS_ENTREGA)[number]);
 
+  // Só dá pra cancelar antes de ser enviado, e enquanto o pagamento não
+  // tiver sido recusado (precisa bater com a regra em
+  // app/api/cancelar-pedido/route.ts).
+  const podeCancelar =
+    pedido.status === "separacao" &&
+    pedido.pagamento_status !== "rejeitado" &&
+    pedido.pagamento_status !== "expirado";
+
   return (
     <main className="min-h-screen bg-bg px-6 py-12 sm:px-10">
       <div className="mx-auto max-w-2xl">
@@ -90,27 +100,26 @@ export default async function AcompanharPedidoPage({
         </h1>
 
         <div className="mt-8 border border-line bg-surface p-6">
-          {pedido.pagamento_status === "pendente" && (
+          {pedido.status === "cancelado" ? (
+            <div className="text-center">
+              <p className="text-sm font-bold text-red-600">Esse pedido foi cancelado.</p>
+              {pedido.motivo_cancelamento && (
+                <p className="mt-1 text-xs text-inkSoft">
+                  Motivo: {pedido.motivo_cancelamento}
+                </p>
+              )}
+            </div>
+          ) : pedido.pagamento_status === "pendente" ? (
             <p className="text-center text-sm font-bold text-inkSoft">
               Ainda estamos aguardando a confirmação do seu pagamento via Pix.
               Assim que for aprovado, essa página mostra o andamento do
               pedido.
             </p>
-          )}
-
-          {(pedido.pagamento_status === "rejeitado" || pedido.pagamento_status === "expirado") && (
+          ) : pedido.pagamento_status === "rejeitado" || pedido.pagamento_status === "expirado" ? (
             <p className="text-center text-sm font-bold text-red-600">
               O pagamento desse pedido não foi aprovado ou expirou.
             </p>
-          )}
-
-          {pedido.pagamento_status === "aprovado" && pedido.status === "cancelado" && (
-            <p className="text-center text-sm font-bold text-red-600">
-              Esse pedido foi cancelado.
-            </p>
-          )}
-
-          {pedido.pagamento_status === "aprovado" && pedido.status !== "cancelado" && (
+          ) : (
             <div className="flex items-start justify-between gap-2">
               {["Pagamento confirmado", ...rotulos].map((rotulo, indice) => {
                 // índice 0 (pagamento) sempre concluído; os demais comparam
@@ -167,6 +176,8 @@ export default async function AcompanharPedidoPage({
             <span>Total</span>
             <span>{formatarPreco(pedido.valor_total)}</span>
           </div>
+
+          {podeCancelar && <CancelarPedido pedidoId={pedido.id} />}
         </div>
 
         <Link href="/" className="mt-6 block text-center text-sm font-bold text-inkSoft underline">

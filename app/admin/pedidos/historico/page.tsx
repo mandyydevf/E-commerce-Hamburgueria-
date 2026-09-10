@@ -29,7 +29,7 @@ export default async function HistoricoPedidosPage() {
   const { data: pedidos } = await supabase
     .from("pedidos")
     .select(
-      "id, cliente_nome, tipo_entrega, status, pagamento_status, codigo_rastreio, valor_total, criado_em, itens_pedido(id, produto_nome, tamanho, cor, quantidade)"
+      "id, cliente_nome, tipo_entrega, status, pagamento_status, codigo_rastreio, motivo_cancelamento, cancelado_por, valor_total, criado_em, itens_pedido(id, produto_nome, tamanho, cor, quantidade)"
     )
     .lt("criado_em", inicio)
     .order("criado_em", { ascending: false })
@@ -102,6 +102,14 @@ export default async function HistoricoPedidosPage() {
                         >
                           {ETIQUETA_STATUS_GERAL[geral]}
                         </span>
+                        {pedido.status === "cancelado" && (
+                          <div className="mt-1 max-w-[200px] text-xs text-ink/50">
+                            {pedido.cancelado_por === "cliente" && (
+                              <p className="font-bold text-ink/70">Pelo cliente</p>
+                            )}
+                            {pedido.motivo_cancelamento && <p>{pedido.motivo_cancelamento}</p>}
+                          </div>
+                        )}
                       </td>
                       <td className="px-4 py-3 text-right font-bold text-accent">
                         {formatarPreco(pedido.valor_total)}

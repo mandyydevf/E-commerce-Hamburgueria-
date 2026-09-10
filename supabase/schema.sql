@@ -88,6 +88,8 @@ create table if not exists pedidos (
     check (pagamento_status in ('pendente', 'aprovado', 'rejeitado', 'expirado')),
   codigo_rastreio text,
   transportadora text,
+  motivo_cancelamento text,
+  cancelado_por text check (cancelado_por is null or cancelado_por in ('cliente', 'loja')),
   criado_em timestamptz not null default now()
 );
 

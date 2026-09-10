@@ -11,7 +11,7 @@ export default async function AdminPedidosPage() {
   const { data: pedidos } = await supabase
     .from("pedidos")
     .select(
-      "id, cliente_nome, cliente_telefone, tipo_entrega, endereco, status, pagamento_status, codigo_rastreio, transportadora, valor_total, criado_em, itens_pedido(id, produto_nome, tamanho, cor, quantidade, preco_unitario)"
+      "id, cliente_nome, cliente_telefone, tipo_entrega, endereco, status, pagamento_status, codigo_rastreio, transportadora, motivo_cancelamento, cancelado_por, valor_total, criado_em, itens_pedido(id, produto_nome, tamanho, cor, quantidade, preco_unitario)"
     )
     .gte("criado_em", inicio)
     .lt("criado_em", fim)
